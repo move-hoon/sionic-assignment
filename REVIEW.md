@@ -43,9 +43,9 @@ AI는 아래 영역에서 적극적으로 활용했습니다.
 - 삭제 순서는 cascade에 맡기지 않고 `feedback -> chat -> thread`로 서비스에서 직접 처리하는 점
 - 요청 DTO의 `model`이 실제 provider 호출까지 반영되어야 한다는 점
 - streaming은 “응답 형식”뿐 아니라 “DB 저장 완료 시점”까지 설계해야 한다는 점
-- 기존 Gemini one-shot prompt 구조를 OpenAI message list 구조로 바꾸기 위해 AI 경계를 넓혀야 한다는 점
+- 기존 one-shot prompt 구조를 OpenAI message list 구조로 바꾸기 위해 AI 경계를 넓혀야 한다는 점
 
-가장 큰 어려움은 요구사항 원문은 OpenAI 예시를 기준으로 설명하지만, 기존 구현은 Gemini 중심의 단일 prompt 기반이었다는 점입니다.  
+가장 큰 어려움은 요구사항 원문은 OpenAI 예시를 기준으로 설명하지만, 기존 구현은 단일 prompt 기반이었다는 점입니다.  
 그래서 단순 provider 교체가 아니라:
 - `prompt` → `messages`
 - sync-only → `sync + stream`
