@@ -1,0 +1,20 @@
+spring:
+  datasource:
+    url: jdbc:tc:postgresql:15.8:///testdb
+    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
+    username: test
+    password: test
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+
+admin:
+  email: admin@test.local
+  password: Admin1234!
+  name: Test Admin
+
+ai:
+  api-key: test-key
+  base-url: http://localhost
+  model: test-model

@@ -12,8 +12,8 @@ class RestClientConfig {
 
     @Bean
     fun aiRestClient(
-        @Value("\${ai.base-url:https://generativelanguage.googleapis.com}")
-        baseUrl: String
+        @Value("\${ai.base-url:https://api.openai.com}")
+        baseUrl: String,
     ): RestClient = RestClient.builder()
         .baseUrl(baseUrl)
         .requestFactory(timeoutRequestFactory())
@@ -22,6 +22,6 @@ class RestClientConfig {
     private fun timeoutRequestFactory(): SimpleClientHttpRequestFactory =
         SimpleClientHttpRequestFactory().apply {
             setConnectTimeout(Duration.ofSeconds(5))
-            setReadTimeout(Duration.ofSeconds(30))
+            setReadTimeout(Duration.ofSeconds(60))
         }
 }

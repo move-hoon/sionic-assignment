@@ -14,7 +14,9 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
+import com.sionic.global.auth.JwtInterceptor
 import jakarta.validation.Valid
+import org.springframework.test.context.bean.override.mockito.MockitoBean
 
 data class SampleRequest(@field:NotBlank val name: String = "")
 
@@ -37,11 +39,15 @@ class FakeController {
     fun constraintViolation(): Unit = throw ConstraintViolationException("name: 공백일 수 없습니다", emptySet())
 
     @PostMapping("/test/valid")
+    @Suppress("UNUSED_PARAMETER")
     fun valid(@Valid @RequestBody request: SampleRequest): Unit = Unit
 }
 
 @WebMvcTest(controllers = [FakeController::class])
 class GlobalExceptionHandlerTest {
+
+    @MockitoBean
+    lateinit var jwtInterceptor: JwtInterceptor
 
     @Autowired
     lateinit var mockMvc: MockMvc
