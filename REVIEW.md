@@ -43,10 +43,10 @@ AI는 아래 영역에서 적극적으로 활용했습니다.
 - 삭제 순서는 cascade에 맡기지 않고 `feedback -> chat -> thread`로 서비스에서 직접 처리하는 점
 - 요청 DTO의 `model`이 실제 provider 호출까지 반영되어야 한다는 점
 - streaming은 “응답 형식”뿐 아니라 “DB 저장 완료 시점”까지 설계해야 한다는 점
-- 기존 one-shot prompt 구조를 OpenAI message list 구조로 바꾸기 위해 AI 경계를 넓혀야 한다는 점
+- one-shot prompt 구조보다 OpenAI message list 구조가 요구사항과 더 잘 맞는다는 점
 
-가장 큰 어려움은 요구사항 원문은 OpenAI 예시를 기준으로 설명하지만, 기존 구현은 단일 prompt 기반이었다는 점입니다.  
-그래서 단순 provider 교체가 아니라:
+가장 큰 어려움은 요구사항 원문이 OpenAI 예시를 기준으로 설명된다는 점이었습니다.  
+그래서 단순한 API 호출 추가가 아니라:
 - `prompt` → `messages`
 - sync-only → `sync + stream`
 - request DTO 계약 → 실제 provider 호출 계약
@@ -54,23 +54,22 @@ AI는 아래 영역에서 적극적으로 활용했습니다.
 으로 구조를 넓히는 작업이 필요했습니다.
 
 ## 3. 가장 어려웠던 기능
-가장 어려웠던 기능은 **stateful chat + OpenAI message history + streaming persistence**를 동시에 만족시키는 부분이었습니다.
+가장 어려웠던 기능은 **stateful chat + OpenAI message history + streaming 응답 저장 시점**을 동시에 만족시키는 부분이었습니다.
 
-이 기능이 어려운 이유는 세 가지였습니다.
+이 기능이 어려웠던 이유는 세 가지였습니다.
 1. thread는 마지막 질문 시점 기준으로 재사용/분기되어야 함
 2. OpenAI 요청은 이전 대화를 `developer/user/assistant/user` 순의 messages로 정확히 보내야 함
-3. streaming일 때는 delta를 먼저 전달하면서도, 최종 완료 전에는 partial chat을 저장하지 않아야 함
+3. streaming일 때는 delta를 먼저 전달하면서도, **최종 응답 텍스트를 모두 수집하기 전에는 chat을 저장하지 않아야 함**
 
-기존 구현은 이전 대화를 문자열 prompt 하나로 합치는 방식이었습니다. 이 방식은 간단하지만 OpenAI Chat Completions 예시와 정확히 맞지 않았습니다.  
-그래서 서비스 계층에서 대화 문맥을 structured messages로 조립하도록 변경했습니다.
+기존 구현은 이전 대화를 문자열 prompt 하나로 합치는 방식이었습니다. 이 방식은 간단하지만 OpenAI Chat Completions 예시와는 거리가 있었습니다. 그래서 서비스 계층에서 대화 문맥을 structured messages로 조립하도록 변경했습니다.
 
-최종 조립 방식:
+최종 조립 방식은 아래와 같습니다.
 - `developer` instruction
 - 이전 `user` 질문
 - 이전 `assistant` 답변
 - 현재 `user` 질문
 
-그리고 streaming 경로에서는 SSE로 delta를 보내되, provider stream이 정상 완료된 뒤에만 chat을 저장하도록 정리했습니다.
+또한 streaming 경로에서는 SSE로 delta를 전달하되, **최종 응답을 모두 수집한 뒤에만 chat을 저장하도록 구현했습니다.**
 
 ## 4. 구현 범위와 우선순위 판단
 배점 안내상 구현량은 낮은 비중이라고 되어 있었지만, 최종적으로는 요구사항을 전부 구현하는 방향으로 마무리했습니다. 다만 “널리”보다 “끝까지”를 우선했고, 모든 핵심 기능은 테스트로 고정하려고 했습니다.
@@ -145,6 +144,6 @@ AI 호출 경계는 `AiClient` / `AiRequest` / `AiResponse`로 유지하되, `Ai
 - 테스트로 증명하는 개발 방식이었습니다.
 
 핵심 포인트는 세 가지입니다.
-- OpenAI 중심 요구사항에 맞춰 provider 경계를 바로잡았다.
-- stateful chat의 핵심 복잡도(30분 규칙, thread-first pagination, message history)를 정확히 구현했다.
-- streaming/model/history 같은 빠지기 쉬운 계약을 실제 코드와 테스트로 맞췄다.
+- OpenAI Chat Completions 요구사항에 맞춰 AI 호출 구조를 구현했습니다.
+- stateful chat의 핵심 복잡도(30분 규칙, thread-first pagination, message history)를 정확히 구현했습니다.
+- streaming, model, message history처럼 빠지기 쉬운 계약을 실제 코드와 테스트로 맞췄습니다.

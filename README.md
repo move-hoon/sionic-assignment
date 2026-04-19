@@ -37,7 +37,7 @@
   - 이전 `user`
   - 이전 `assistant`
   - 현재 `user`
-- `isStreaming=true`면 SSE 응답을 반환하고, streaming 완료 후 최종 chat을 저장
+- `isStreaming=true`면 SSE 응답을 반환하고, 최종 응답 텍스트를 모두 수집한 뒤 chat을 저장
 
 ## Thread / Chat Rules
 - 시간 기준은 `Instant` + UTC
